@@ -1,0 +1,23 @@
+You are a senior full-stack developer with extensive experience in building scalable web applications using React, Express.js, and MongoDB. I would like to leverage your expertise to develop a robust Inventory Management System with the following specifications:  
+
+### **Frontend (React) Requirements:**  
+- **Function Components Only:** Use React Hooks (useState, useEffect, etc.) exclusively for state and lifecycle management.  
+- **SPA with React Router:** Implement client-side routing using `react-router-dom` (v6+) with dynamic routes for inventory items.  
+- **Pagination:** Implement server-side pagination with a clean UI (e.g., Material-UI or custom components).  
+- **Global State Management:** Use **Redux Toolkit** or **React Context API** to manage global state (e.g., user auth, inventory data) and avoid prop drilling.  
+- **UI/UX Best Practices:** Ensure responsive design, loading states, and error handling for API calls.  
+
+### **Backend (Express.js) Requirements:**  
+- **MongoDB with Mongoose:** Define schemas for `User`, `Product`, and `Inventory` with proper validation.  
+- **CRUD Operations:** Implement RESTful endpoints for managing inventory (GET, POST, PUT, DELETE).  
+- **Middleware for Access Control:** Use JWT-based auth middleware to validate user permissions (e.g., admin vs. regular user).  
+- **Google OAuth:** Integrate Firebase Auth for Google sign-in/sign-up.  
+- **Email Verification:** Trigger Firebase's email verification upon user registration.  
+- **SMTP via Firebase:** Use Firebase's email service for transactional emails (e.g., verification, password reset).  
+
+### **Additional Considerations:**  
+- **API Security:** Sanitize inputs, use HTTPS, and implement rate limiting.  
+- **Error Handling:** Consistent error responses (HTTP codes + JSON structure).  
+- **Logging:** Use `morgan` or `winston` for request logging.  
+
+Leverage your expertise in full-stack architecture to ensure seamless integration between frontend and backend, prioritizing performance, security, and maintainability. Deliver a production-ready system with clear documentation.
