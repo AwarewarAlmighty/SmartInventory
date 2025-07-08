@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Eye, EyeOff } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,7 +15,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +36,25 @@ export default function Login() {
       toast({
         title: "Error",
         description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      toast({
+        title: "Success",
+        description: "Logged in with Google successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to login with Google. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -121,6 +141,30 @@ export default function Login() {
               {isLoading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
             </Button>
           </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                variant="outline"
+                className="w-full py-3 border border-gray-300 rounded-lg font-medium transition-colors hover:bg-gray-50"
+              >
+                <FcGoogle className="w-5 h-5 mr-3" />
+                Sign in with Google
+              </Button>
+            </div>
+          </div>
 
           <p className="mt-6 text-center text-sm text-gray-600">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}

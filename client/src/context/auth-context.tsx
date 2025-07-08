@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@shared/schema";
+import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -32,6 +34,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     }
   }, [token]);
+
+  // Monitor Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser && !user) {
+        // User signed in with Google, create/get user in our system
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          const response = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idToken,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+            setToken(data.token);
+            localStorage.setItem("token", data.token);
+          }
+        } catch (error) {
+          console.error("Firebase auth error:", error);
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const fetchUser = async () => {
     try {
@@ -113,7 +150,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // Firebase auth state change will handle the rest
+    } catch (error) {
+      console.error("Google login error:", error);
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Firebase logout error:", error);
+    }
     setUser(null);
     setToken(null);
     localStorage.removeItem("token");
@@ -126,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         login,
         register,
+        loginWithGoogle,
         logout,
         isLoading,
       }}

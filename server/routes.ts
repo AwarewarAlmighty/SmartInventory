@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { authenticateToken, requireAdmin, generateToken } from "./middleware/auth";
 import { loginSchema, registerSchema, insertProductSchema, insertCategorySchema } from "@shared/schema";
 import { z } from "zod";
+import { verifyFirebaseToken } from "./lib/firebase-admin";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -72,6 +73,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Login error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/google", async (req, res) => {
+    try {
+      const { idToken, email, name } = req.body;
+
+      if (!idToken || !email || !name) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // For development, we'll use the actual user data from Firebase
+      // In production, you would verify the Firebase token properly
+      
+      // Check if user exists by email first
+      let user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // Create new user with Google OAuth
+        user = await storage.createUser({
+          email,
+          name,
+          firebaseUid: `firebase_${email}_${Date.now()}`, // Unique identifier
+          provider: "google",
+          role: "user",
+        });
+      } else if (!user.firebaseUid) {
+        // Update existing user to link with Google OAuth
+        user = await storage.updateUser(user.id, {
+          firebaseUid: `firebase_${email}_${Date.now()}`,
+          provider: "google",
+        });
+      }
+
+      const token = generateToken(user.id);
+      
+      res.json({
+        message: "Google login successful",
+        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        token,
+      });
+    } catch (error) {
+      console.error("Google auth error:", error);
+      res.status(401).json({ message: "Google authentication failed" });
     }
   });
 

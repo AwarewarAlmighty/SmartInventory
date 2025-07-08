@@ -6,9 +6,11 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Optional for Google OAuth users
   name: text("name").notNull(),
   role: text("role").notNull().default("user"), // user, admin
+  firebaseUid: text("firebase_uid").unique(), // Firebase user ID
+  provider: text("provider").notNull().default("email"), // email, google
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
