@@ -1,4 +1,3 @@
-// In-memory storage fallback for development without MongoDB
 import type { IMongoStorage } from './mongodb-storage';
 import type { 
   IUser, 
@@ -13,32 +12,24 @@ import type {
   DashboardStats
 } from '../shared/mongodb-schema';
 
-interface MemoryUser extends UserType {
+interface MemoryUser extends IUser {
   _id: string;
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-interface MemoryCategory extends CategoryType {
+interface MemoryCategory extends ICategory {
   _id: string;
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-interface MemoryProduct extends ProductType {
+interface MemoryProduct extends IProduct {
   _id: string;
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-interface MemoryStockMovement extends StockMovementType {
+interface MemoryStockMovement extends IStockMovement {
   _id: string;
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export class FallbackStorage implements IMongoStorage {
@@ -57,7 +48,6 @@ export class FallbackStorage implements IMongoStorage {
   }
 
   private seedData() {
-    // Create sample categories
     const categories = [
       { name: 'Electronics', description: 'Electronic devices and components' },
       { name: 'Clothing', description: 'Apparel and fashion items' },
@@ -66,7 +56,7 @@ export class FallbackStorage implements IMongoStorage {
       { name: 'Books', description: 'Books and educational materials' }
     ];
 
-    const categoryIds: string[] = [];
+    const categoryDocs: MemoryCategory[] = [];
     categories.forEach(cat => {
       const id = this.generateId();
       const category: MemoryCategory = {
@@ -75,30 +65,29 @@ export class FallbackStorage implements IMongoStorage {
         id: id,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
+      } as MemoryCategory;
       this.categories.set(id, category);
-      categoryIds.push(id);
+      categoryDocs.push(category);
     });
 
-    // Create sample products
     const products = [
       {
         name: 'iPhone 13',
         sku: 'IPHONE13-128',
         description: 'Apple iPhone 13 with 128GB storage',
         price: 699.99,
-        stockQuantity: 25,
+        stockQuantity: 5,
         minStockLevel: 5,
-        categoryId: categoryIds[0]
+        categoryId: categoryDocs[0]._id
       },
       {
         name: 'MacBook Pro',
         sku: 'MBP-M1-512',
         description: 'MacBook Pro with M1 chip and 512GB SSD',
         price: 1299.99,
-        stockQuantity: 8,
+        stockQuantity: 3,
         minStockLevel: 3,
-        categoryId: categoryIds[0]
+        categoryId: categoryDocs[0]._id
       },
       {
         name: 'T-Shirt Cotton',
@@ -107,16 +96,16 @@ export class FallbackStorage implements IMongoStorage {
         price: 29.99,
         stockQuantity: 50,
         minStockLevel: 20,
-        categoryId: categoryIds[1]
+        categoryId: categoryDocs[1]._id
       },
       {
         name: 'Basketball',
         sku: 'BALL-BASK-OFF',
         description: 'Official size basketball',
         price: 39.99,
-        stockQuantity: 22,
+        stockQuantity: 10,
         minStockLevel: 10,
-        categoryId: categoryIds[3]
+        categoryId: categoryDocs[3]._id
       }
     ];
 
@@ -128,7 +117,7 @@ export class FallbackStorage implements IMongoStorage {
         id: id,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
+      } as MemoryProduct;
       this.products.set(id, product);
     });
   }
@@ -159,7 +148,7 @@ export class FallbackStorage implements IMongoStorage {
       id: id,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as MemoryUser;
     this.users.set(id, user);
     return user;
   }
@@ -168,7 +157,7 @@ export class FallbackStorage implements IMongoStorage {
     const user = this.users.get(id);
     if (!user) return null;
     
-    const updatedUser = { ...user, ...userData, updatedAt: new Date() };
+    const updatedUser: MemoryUser = { ...user, ...userData, updatedAt: new Date() } as MemoryUser;
     this.users.set(id, updatedUser);
     return updatedUser;
   }
@@ -189,7 +178,7 @@ export class FallbackStorage implements IMongoStorage {
       id: id,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as MemoryCategory;
     this.categories.set(id, category);
     return category;
   }
@@ -198,7 +187,7 @@ export class FallbackStorage implements IMongoStorage {
     const category = this.categories.get(id);
     if (!category) return null;
     
-    const updatedCategory = { ...category, ...categoryData, updatedAt: new Date() };
+    const updatedCategory: MemoryCategory = { ...category, ...categoryData, updatedAt: new Date() } as MemoryCategory;
     this.categories.set(id, updatedCategory);
     return updatedCategory;
   }
@@ -218,7 +207,6 @@ export class FallbackStorage implements IMongoStorage {
     
     let filteredProducts = Array.from(this.products.values());
 
-    // Apply search filter
     if (search) {
       filteredProducts = filteredProducts.filter(product =>
         product.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -227,26 +215,29 @@ export class FallbackStorage implements IMongoStorage {
       );
     }
 
-    // Apply category filter
-    if (categoryId) {
-      filteredProducts = filteredProducts.filter(product => product.categoryId === categoryId);
+    if (categoryId && categoryId !== 'all') {
+      filteredProducts = filteredProducts.filter(product => product.categoryId.toString() === categoryId);
     }
 
-    // Apply status filter
-    if (status === 'low_stock') {
-      filteredProducts = filteredProducts.filter(product => product.stockQuantity < product.minStockLevel);
+    if (status) {
+        if (status === 'low_stock') {
+            filteredProducts = filteredProducts.filter(product => product.stockQuantity <= product.minStockLevel && product.stockQuantity > 0);
+        } else if (status === 'out_of_stock') {
+            filteredProducts = filteredProducts.filter(product => product.stockQuantity === 0);
+        } else if (status === 'in_stock') {
+            filteredProducts = filteredProducts.filter(product => product.stockQuantity > product.minStockLevel);
+        }
     }
 
     const total = filteredProducts.length;
     const skip = (page - 1) * limit;
     const products = filteredProducts.slice(skip, skip + limit);
 
-    // Add category information
     const productsWithCategory = products.map(product => {
-      const category = this.categories.get(product.categoryId);
+      const category = this.categories.get(product.categoryId.toString());
       return {
         ...product,
-        category: category || { _id: '', name: 'Unknown', description: '' }
+        category: category || { _id: '', name: 'Unknown', description: '' } as ICategory
       };
     });
 
@@ -257,10 +248,10 @@ export class FallbackStorage implements IMongoStorage {
     const product = this.products.get(id);
     if (!product) return null;
     
-    const category = this.categories.get(product.categoryId);
+    const category = this.categories.get(product.categoryId.toString());
     return {
       ...product,
-      category: category || { _id: '', name: 'Unknown', description: '' }
+      category: category || { _id: '', name: 'Unknown', description: '' } as ICategory
     };
   }
 
@@ -272,7 +263,7 @@ export class FallbackStorage implements IMongoStorage {
       id: id,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as MemoryProduct;
     this.products.set(id, product);
     return product;
   }
@@ -281,7 +272,7 @@ export class FallbackStorage implements IMongoStorage {
     const product = this.products.get(id);
     if (!product) return null;
     
-    const updatedProduct = { ...product, ...productData, updatedAt: new Date() };
+    const updatedProduct: MemoryProduct = { ...product, ...productData, updatedAt: new Date() } as MemoryProduct;
     this.products.set(id, updatedProduct);
     return updatedProduct;
   }
@@ -298,19 +289,19 @@ export class FallbackStorage implements IMongoStorage {
       id: id,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as MemoryStockMovement;
     this.stockMovements.set(id, movement);
     return movement;
   }
 
   async getStockMovements(productId: string): Promise<IStockMovement[]> {
-    return Array.from(this.stockMovements.values()).filter(movement => movement.productId === productId);
+    return Array.from(this.stockMovements.values()).filter(movement => movement.productId.toString() === productId);
   }
 
   async getDashboardStats(): Promise<DashboardStats> {
     const products = Array.from(this.products.values());
     const totalProducts = products.length;
-    const lowStockItems = products.filter(p => p.stockQuantity < p.minStockLevel).length;
+    const lowStockItems = products.filter(p => p.stockQuantity <= p.minStockLevel && p.stockQuantity > 0).length;
     const totalValue = products.reduce((sum, product) => sum + (product.price * product.stockQuantity), 0);
     const totalCategories = this.categories.size;
 
@@ -328,8 +319,8 @@ export class FallbackStorage implements IMongoStorage {
       .slice(0, 10);
 
     return movements.map(movement => {
-      const product = this.products.get(movement.productId);
-      const user = this.users.get(movement.userId);
+      const product = this.products.get(movement.productId.toString());
+      const user = this.users.get(movement.userId.toString());
       return {
         id: movement._id,
         type: movement.type,

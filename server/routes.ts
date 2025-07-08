@@ -6,12 +6,15 @@ import { fallbackStorage } from "./fallback-storage";
 import mongoose from "mongoose";
 
 // Use MongoDB storage (fallback will be used if connection fails)
-const getStorage = () => mongoose.connection.readyState === 1 ? mongoStorage : fallbackStorage;
+const getStorage = () => mongoStorage;
 import { authenticateToken, requireAdmin, generateToken } from "./middleware/auth";
 import { loginSchema, registerSchema, insertProductSchema, insertCategorySchema } from "@shared/mongodb-schema";
 import { z } from "zod";
+import productRouter from "../api/products";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -199,98 +202,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Product routes
-  app.get("/api/products", authenticateToken, async (req, res) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string || "";
-      const categoryId = req.query.categoryId as string || "";
-      const status = req.query.status as string || "";
+  // // Product routes
+  // app.get("/api/products", authenticateToken, async (req, res) => {
+  //   try {
+  //     const page = parseInt(req.query.page as string) || 1;
+  //     const limit = parseInt(req.query.limit as string) || 10;
+  //     const search = req.query.search as string || "";
+  //     const categoryId = req.query.categoryId as string || "";
+  //     const status = req.query.status as string || "";
 
-      const result = await getStorage().getProducts({
-        page,
-        limit,
-        search,
-        categoryId,
-        status,
-      });
+  //     const result = await getStorage().getProducts({
+  //       page,
+  //       limit,
+  //       search,
+  //       categoryId,
+  //       status,
+  //     });
 
-      res.json({
-        products: result.products.map(product => ({
-          ...product,
-          id: product._id?.toString() || product.id,
-        })),
-        total: result.total,
-      });
-    } catch (error) {
-      console.error("Get products error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  //     res.json({
+  //       products: result.products.map(product => ({
+  //         ...product,
+  //         id: product._id?.toString() || product.id,
+  //       })),
+  //       total: result.total,
+  //     });
+  //   } catch (error) {
+  //     console.error("Get products error:", error);
+  //     res.status(500).json({ message: "Internal server error" });
+  //   }
+  // });
 
-  app.get("/api/products/:id", authenticateToken, async (req, res) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-      const product = await getStorage().getProductById(req.params.id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.json({ ...product, id: product._id?.toString() || product.id });
-    } catch (error) {
-      console.error("Get product error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // app.get("/api/products/:id", authenticateToken, async (req, res) => {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  //       return res.status(400).json({ message: "Invalid product ID" });
+  //     }
+  //     const product = await getStorage().getProductById(req.params.id);
+  //     if (!product) {
+  //       return res.status(404).json({ message: "Product not found" });
+  //     }
+  //     res.json({ ...product, id: product._id?.toString() || product.id });
+  //   } catch (error) {
+  //     console.error("Get product error:", error);
+  //     res.status(500).json({ message: "Internal server error" });
+  //   }
+  // });
 
-  app.post("/api/products", authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      const data = insertProductSchema.parse(req.body);
-      const product = await getStorage().createProduct(data);
-      res.status(201).json({ ...product, id: product._id.toString() });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      console.error("Create product error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // app.post("/api/products", authenticateToken, requireAdmin, async (req, res) => {
+  //   try {
+  //     const data = insertProductSchema.parse(req.body);
+  //     const product = await getStorage().createProduct(data);
+  //     res.status(201).json({ ...product, id: product._id.toString() });
+  //   } catch (error) {
+  //     if (error instanceof z.ZodError) {
+  //       return res.status(400).json({ message: "Invalid input", errors: error.errors });
+  //     }
+  //     console.error("Create product error:", error);
+  //     res.status(500).json({ message: "Internal server error" });
+  //   }
+  // });
 
-  app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-      const data = insertProductSchema.parse(req.body);
-      const product = await getStorage().updateProduct(req.params.id, data);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.json({ ...product, id: product._id.toString() });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      console.error("Update product error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  //       return res.status(400).json({ message: "Invalid product ID" });
+  //     }
+  //     const data = insertProductSchema.parse(req.body);
+  //     const product = await getStorage().updateProduct(req.params.id, data);
+  //     if (!product) {
+  //       return res.status(404).json({ message: "Product not found" });
+  //     }
+  //     res.json({ ...product, id: product._id.toString() });
+  //   } catch (error) {
+  //     if (error instanceof z.ZodError) {
+  //       return res.status(400).json({ message: "Invalid input", errors: error.errors });
+  //     }
+  //     console.error("Update product error:", error);
+  //     res.status(500).json({ message: "Internal server error" });
+  //   }
+  // });
 
-  app.delete("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-      await getStorage().deleteProduct(req.params.id);
-      res.json({ message: "Product deleted successfully" });
-    } catch (error) {
-      console.error("Delete product error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // app.delete("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  //       return res.status(400).json({ message: "Invalid product ID" });
+  //     }
+  //     await getStorage().deleteProduct(req.params.id);
+  //     res.json({ message: "Product deleted successfully" });
+  //   } catch (error) {
+  //     console.error("Delete product error:", error);
+  //     res.status(500).json({ message: "Internal server error" });
+  //   }
+  // });
+
+  app.use("/api/products", productRouter );
 
   // Dashboard routes
   app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {

@@ -137,12 +137,14 @@ export class MongoStorage implements IMongoStorage {
       Product.countDocuments(query)
     ]);
 
-    const productsWithCategory = products.map(product => ({
-      ...product,
-      id: product._id.toString(),
-      categoryId: product.categoryId.toString(),
-      category: product.categoryId as any,
-    }));
+    const productsWithCategory = products.map(product => {
+      const { categoryId, ...rest } = product;
+      return {
+        ...rest,
+        id: product._id.toString(),
+        category: categoryId as any,
+      };
+    });
 
     return { products: productsWithCategory, total };
   }
