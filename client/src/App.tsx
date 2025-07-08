@@ -7,9 +7,13 @@ import { AuthProvider, useAuth } from "@/context/auth-context";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
+import Categories from "@/pages/categories"; // Import the new component
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import NotFound from "@/pages/not-found";
+
+const Users = () => <div>Users Page</div>;
+const Settings = () => <div>Settings Page</div>;
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -39,6 +43,9 @@ function AppContent() {
             <Route path="/" component={Dashboard} />
             <Route path="/dashboard" component={Dashboard} />
             <Route path="/inventory" component={Inventory} />
+            <Route path="/categories" component={Categories} />
+            <Route path="/users" component={Users} />
+            <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>
         </main>

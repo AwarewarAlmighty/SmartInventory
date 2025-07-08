@@ -19,8 +19,8 @@ interface ProductsResponse {
 export default function ProductTable() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithCategory | null>(null);
   const { toast } = useToast();
@@ -33,8 +33,8 @@ export default function ProductTable() {
         page: page.toString(),
         limit: "10",
         ...(search && { search }),
-        ...(categoryFilter && { categoryId: categoryFilter }),
-        ...(statusFilter && { status: statusFilter }),
+        ...(categoryFilter !== "all" && { categoryId: categoryFilter }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
       });
       const response = await fetch(`/api/products?${params}`, {
         headers: {
@@ -138,7 +138,7 @@ export default function ProductTable() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -151,7 +151,7 @@ export default function ProductTable() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="in_stock">In Stock</SelectItem>
                 <SelectItem value="low_stock">Low Stock</SelectItem>
                 <SelectItem value="out_of_stock">Out of Stock</SelectItem>
