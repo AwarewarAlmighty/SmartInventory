@@ -42,6 +42,6 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   next();
 };
 
-export const generateToken = (userId: number) => {
+export const generateToken = (userId: string) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
 };

@@ -106,7 +106,12 @@ Build process:
 
 ## Changelog
 
-- July 08, 2025. Initial setup
+- July 08, 2025. Initial setup with PostgreSQL database
+- July 08, 2025. Migrated from PostgreSQL to MongoDB Atlas
+  - Added MongoDB schemas and storage layer
+  - Integrated with user's MongoDB Atlas cluster
+  - Created fallback in-memory storage for development
+  - Firebase Google OAuth integration maintained
 
 ## User Preferences
 
