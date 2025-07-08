@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await getStorage().createUser({
           email,
           name,
-          firebaseUid: `firebase_${email}_${Date.now()}`, // Unique identifier
+          firebaseUid: `firebase_${email}_${Date.now()}`,
           provider: "google",
           role: "user",
         });
@@ -130,6 +130,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user
   app.get("/api/auth/me", authenticateToken, async (req, res) => {
     try {
+      if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
       const user = await getStorage().getUser(req.user.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -228,6 +231,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/:id", authenticateToken, async (req, res) => {
     try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const product = await getStorage().getProductById(req.params.id);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -255,6 +261,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const data = insertProductSchema.parse(req.body);
       const product = await getStorage().updateProduct(req.params.id, data);
       if (!product) {
@@ -272,6 +281,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       await getStorage().deleteProduct(req.params.id);
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
@@ -317,6 +329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/stock-movements/:productId", authenticateToken, async (req, res) => {
     try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const movements = await getStorage().getStockMovements(req.params.productId);
       res.json(movements.map(movement => ({ ...movement, id: movement._id.toString() })));
     } catch (error) {
