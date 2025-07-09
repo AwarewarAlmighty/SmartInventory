@@ -93,25 +93,11 @@ This is a full-stack inventory management system built with React, Express.js, a
 
 ## Deployment Strategy
 
-The application is configured for deployment on Replit with:
+The application is configured for deployment with:
 - **Development mode**: Vite dev server with hot module replacement
 - **Production build**: Static files served by Express
 - **Environment variables**: Database URL and JWT secret
 - **Database migrations**: Drizzle Kit for schema management
-
-Build process:
-1. Frontend: Vite builds React app to `dist/public`
-2. Backend: esbuild bundles Node.js server to `dist/index.js`
-3. Production: Single Express server serves both API and static files
-
-## Changelog
-
-- July 08, 2025. Initial setup with PostgreSQL database
-- July 08, 2025. Migrated from PostgreSQL to MongoDB Atlas
-  - Added MongoDB schemas and storage layer
-  - Integrated with user's MongoDB Atlas cluster
-  - Created fallback in-memory storage for development
-  - Firebase Google OAuth integration maintained
 
 ## User Preferences
 
